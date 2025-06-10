@@ -18,7 +18,7 @@
         setThemeClass();
 
     </script>
-    <title></title>
+    <title>Telegram WebApp Demo</title>
     <style>
         body {
             --bg-color: var(--tg-theme-bg-color, #fff);
@@ -293,7 +293,63 @@
         <div class="section-header">Telegram Web Apps Demo</div>
 
         <div class="row">
-            <strong>Init Data Unsafe:</strong>
+            <strong>Query ID:</strong>
+            <span id="query_id_display"></span>
+        </div>
+        <div class="row">
+            <strong>Auth Date:</strong>
+            <span id="auth_date_display"></span>
+        </div>
+        <div class="row">
+            <strong>Signature:</strong>
+            <span id="signature_display"></span>
+        </div>
+        <div class="row">
+            <strong>Hash:</strong>
+            <span id="hash_display"></span>
+        </div>
+
+        <div class="section-header">User Information</div>
+        <div class="row">
+            <strong>User ID:</strong>
+            <span id="user_id"></span>
+        </div>
+        <div class="row">
+            <strong>First Name:</strong>
+            <span id="user_first_name"></span>
+        </div>
+        <div class="row">
+            <strong>Last Name:</strong>
+            <span id="user_last_name"></span>
+        </div>
+        <div class="row">
+            <strong>Username:</strong>
+            <span id="user_username"></span>
+        </div>
+        <div class="row">
+            <strong>Language Code:</strong>
+            <span id="user_language_code"></span>
+        </div>
+        <div class="row">
+            <strong>Allows Write to PM:</strong>
+            <span id="user_allows_write_to_pm"></span>
+        </div>
+        <div class="row">
+            <strong>Photo URL:</strong>
+            <span id="user_photo_url"></span>
+        </div>
+        <div class="row">
+            <strong>Is Premium:</strong>
+            <span id="user_is_premium"></span>
+        </div>
+        <div class="row">
+            <strong>Added To Attachment Menu:</strong>
+            <span id="user_added_to_attachment_menu"></span>
+        </div>
+
+        <div class="section-header">Other Web App Data</div>
+        <div class="row">
+            <strong>Init Data Unsafe (Full):</strong>
             <span id="init_data_unsafe"></span>
         </div>
         <div class="row">
@@ -579,7 +635,40 @@
         }
 
         // --- Core Web App Info ---
-        displayData('init_data_unsafe', Telegram.WebApp.initDataUnsafe);
+        displayData('init_data_unsafe', Telegram.WebApp.initDataUnsafe); // Full initDataUnsafe
+
+        // Display individual parts of initDataUnsafe and user
+        const initData = Telegram.WebApp.initDataUnsafe;
+        document.getElementById('query_id_display').innerText = initData.query_id || 'N/A';
+        document.getElementById('auth_date_display').innerText = initData.auth_date ? new Date(initData.auth_date * 1000).toLocaleString() : 'N/A';
+        document.getElementById('signature_display').innerText = initData.signature || 'N/A';
+        document.getElementById('hash_display').innerText = initData.hash || 'N/A';
+
+        if (initData.user) {
+            const user = initData.user;
+            document.getElementById('user_id').innerText = user.id || 'N/A';
+            document.getElementById('user_first_name').innerText = user.first_name || 'N/A';
+            document.getElementById('user_last_name').innerText = user.last_name || 'N/A';
+            document.getElementById('user_username').innerText = user.username ? `@${user.username}` : 'N/A';
+            document.getElementById('user_language_code').innerText = user.language_code || 'N/A';
+            document.getElementById('user_allows_write_to_pm').innerText = user.allows_write_to_pm ? 'Yes' : 'No';
+            document.getElementById('user_photo_url').innerText = user.photo_url || 'N/A';
+            document.getElementById('user_is_premium').innerText = user.is_premium ? 'Yes' : 'No';
+            document.getElementById('user_added_to_attachment_menu').innerText = user.added_to_attachment_menu ? 'Yes' : 'No';
+        } else {
+            // If user object is not present in initDataUnsafe (e.g., in a channel post context)
+            document.getElementById('user_id').innerText = 'Not available';
+            document.getElementById('user_first_name').innerText = 'Not available';
+            document.getElementById('user_last_name').innerText = 'Not available';
+            document.getElementById('user_username').innerText = 'Not available';
+            document.getElementById('user_language_code').innerText = 'Not available';
+            document.getElementById('user_allows_write_to_pm').innerText = 'Not available';
+            document.getElementById('user_photo_url').innerText = 'Not available';
+            document.getElementById('user_is_premium').innerText = 'Not available';
+            document.getElementById('user_added_to_attachment_menu').innerText = 'Not available';
+        }
+
+
         displayData('theme_params', Telegram.WebApp.themeParams);
         displayData('web_app_version', Telegram.WebApp.version);
         displayData('web_app_platform', Telegram.WebApp.platform);
@@ -1120,7 +1209,7 @@
                     if ('Accelerometer' in window) {
                         accelerometer = new Accelerometer({ frequency: 60 });
                         accelerometer.addEventListener('reading', function(e) {
-                            accelerometerData.innerText = `X: ${accelerometer.x.toFixed(2)}, Y: ${accelerometer.y.toFixed(2)}, Z: ${accelerometer.z.toFixed(2)}`;
+                            accelerometerData.innerText = `X: ${accelerometer.x?.toFixed(2)}, Y: ${accelerometer.y?.toFixed(2)}, Z: ${accelerometer.z?.toFixed(2)}`;
                         });
                         accelerometer.addEventListener('error', function(e) {
                             accelerometerData.innerText = `Accelerometer error: ${e.message}`;
@@ -1153,16 +1242,17 @@
             const deviceOrientationBtn = document.getElementById('device_orientation_btn');
             const deviceOrientationData = document.getElementById('device_orientation_data');
             let isReading = false;
+            let handleOrientation = null; // Declare outside to allow proper removal
 
             deviceOrientationBtn.addEventListener('click', function() {
                 if (!isReading) {
                     if ('DeviceOrientationEvent' in window) {
-                        function handleOrientation(event) {
+                        handleOrientation = function(event) {
                             deviceOrientationData.innerText = `Alpha: ${event.alpha?.toFixed(2)}, Beta: ${event.beta?.toFixed(2)}, Gamma: ${event.gamma?.toFixed(2)}`;
                             if (event.absolute !== undefined) {
                                 deviceOrientationData.innerText += `\nAbsolute: ${event.absolute ? 'Yes' : 'No'}`;
                             }
-                        }
+                        };
                         window.addEventListener('deviceorientation', handleOrientation);
                         deviceOrientationData.style.color = 'black';
                         deviceOrientationBtn.innerText = 'Stop Device Orientation';
@@ -1172,10 +1262,9 @@
                         deviceOrientationData.style.color = 'red';
                     }
                 } else {
-                    window.removeEventListener('deviceorientation', handleOrientation); // This won't work correctly as handleOrientation is local.
-                    // Better approach for removing listener:
-                    // window.removeEventListener('deviceorientation', handleOrientation); // This won't work correctly if handleOrientation is a new function each time.
-                    // To properly stop: store the event listener function in a variable outside the click handler
+                    if (handleOrientation) { // Check if the handler was set
+                        window.removeEventListener('deviceorientation', handleOrientation);
+                    }
                     deviceOrientationData.innerText = 'Device Orientation stopped.';
                     deviceOrientationData.style.color = 'black';
                     deviceOrientationBtn.innerText = 'Start Device Orientation';
@@ -1195,7 +1284,7 @@
                     if ('Gyroscope' in window) {
                         gyroscope = new Gyroscope({ frequency: 60 });
                         gyroscope.addEventListener('reading', function(e) {
-                            gyroscopeData.innerText = `X: ${gyroscope.x.toFixed(2)}, Y: ${gyroscope.y.toFixed(2)}, Z: ${gyroscope.z.toFixed(2)}`;
+                            gyroscopeData.innerText = `X: ${gyroscope.x?.toFixed(2)}, Y: ${gyroscope.y?.toFixed(2)}, Z: ${gyroscope.z?.toFixed(2)}`;
                         });
                         gyroscope.addEventListener('error', function(e) {
                             gyroscopeData.innerText = `Gyroscope error: ${e.message}`;
