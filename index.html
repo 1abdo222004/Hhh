@@ -1,53 +1,33 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Telegram WebApp Demo</title>
+  <title>عرض بيانات Telegram WebApp</title>
   <style>
     body {
-      font-family: sans-serif;
-      direction: rtl;
-      text-align: right;
+      font-family: monospace;
+      background-color: #f9f9f9;
       padding: 20px;
     }
-    .user-info {
-      background-color: #f0f0f0;
+    pre {
+      background-color: #eaeaea;
       padding: 15px;
       border-radius: 10px;
-      margin-top: 20px;
+      direction: ltr;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
 
-  <h1>مرحبًا بك في WebApp!</h1>
-  <div class="user-info" id="userInfo">جاري تحميل معلومات المستخدم...</div>
+  <h2>Telegram WebApp initData:</h2>
+  <pre id="output">جارٍ التحميل...</pre>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    // التأكد من دعم WebApp
-    if (window.Telegram && Telegram.WebApp) {
-      const initData = Telegram.WebApp.initData;
-      const params = new URLSearchParams(initData);
-      const userStr = params.get("user");
-
-      if (userStr) {
-        const user = JSON.parse(userStr);
-
-        document.getElementById("userInfo").innerHTML = `
-          <strong>الاسم:</strong> ${user.first_name} ${user.last_name || ''}<br>
-          <strong>المعرف:</strong> ${user.id}<br>
-          <strong>اسم المستخدم:</strong> @${user.username}<br>
-          <strong>اللغة:</strong> ${user.language_code}<br>
-          <strong>الصورة:</strong><br>
-          <img src="${user.photo_url}" width="100" alt="User Photo">
-        `;
-      } else {
-        document.getElementById("userInfo").textContent = "لا توجد بيانات مستخدم.";
-      }
-    } else {
-      document.getElementById("userInfo").textContent = "Telegram WebApp غير مدعوم.";
-    }
+    const initData = Telegram.WebApp.initData || "لا يوجد initData";
+    document.getElementById("output").textContent = initData;
   </script>
+
 </body>
 </html>
